@@ -4,6 +4,7 @@ gem 'rails', '3.2.17'
 gem 'haml'
 gem 'jquery-rails'
 gem 'coffee-filter'
+gem 'hogan_assets'
 
 group :assets do
   gem 'sass-rails',   '~> 3.2.3'

@@ -1,13 +1,232 @@
-/*
- * This is a manifest file that'll be compiled into application.css, which will include all the files
- * listed below.
- *
- * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
- * or vendor/assets/stylesheets of plugins, if any, can be referenced here using a relative path.
- *
- * You're free to add application-wide styles to this file and they'll appear at the top of the
- * compiled file, but it's generally better to create a new file per style scope.
- *
- *= require_self
- *= require_tree .
- */
+// ***********************************************************
+//                          FONTS
+// ***********************************************************
+
+
+
+
+// ***********************************************************
+//                          VARS
+// ***********************************************************
+
+$dark-blue: #4c8ec0
+
+$dark-gray: #6e6d6a
+$light-gray: #fcfcfc
+
+$font-size: 12px
+$font-color: #6e6d6a
+$font-family: Arial, Helvetica
+
+
+
+// ***********************************************************
+//                        MIXINS
+// ***********************************************************
+@import animations
+
+@mixin dim($x, $y)
+  width: if(unitless($x), #{$x}px, $x)
+  height: if(unitless($y), #{$y}px, $y)
+
+@mixin opacity($x)
+  opacity: $x/100
+  -moz-opacity: $x/100
+  -khtml-opacity: $x/100
+  filter: alpha(opacity=#{$x})
+  //filter:progid:DXImageTransform.Microsoft.Alpha(opacity=#{$x})
+
+@mixin rounded($nw, $ne: $nw, $se: $nw, $sw: $nw)
+  -moz-border-radius: $nw $ne $se $sw
+  -webkit-border-radius: $nw $ne $se $sw
+  -o-border-radius: $nw $ne $se $sw
+  border-radius: $nw $ne $se $sw
+
+@mixin rotate($deg, $anchorX: null, $anchorY: 0 )
+  -moz-transform: rotate(#{$deg}deg)
+  -webkit-transform: rotate(#{$deg}deg)
+  -o-transform: rotate(#{$deg}deg)
+  -ms-transform: rotate(#{$deg}deg)
+  transform: rotate(#{$deg}deg)
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1)
+  @if $anchorX
+    -moz-transform-origin: $anchorX $anchorY
+    -webkit-transform-origin: $anchorX $anchorY
+    -o-transform-origin: $anchorX $anchorY
+    -ms-transform-origin: $anchorX $anchorY
+    transform-origin: $anchorX $anchorY
+
+
+
+// ***********************************************************
+//                        DEFAULT SETTINGS
+// ***********************************************************
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend, input[type="checkbox"], textarea,
+table, caption, tbody, tfoot, thead, tr, th, td
+  margin: 0
+  padding: 0
+  border: 0
+  outline: 0
+
+
+html, body
+  background-color: white
+  min-height: 100%
+  height: 100%
+
+body 
+  font-size: $font-size 
+  font-family: $font-family
+  color: $font-color
+  line-height: 1.25em
+    
+  
+ol, ul
+  list-style: none
+
+a[href], .link
+  cursor: pointer
+  color: $dark-blue
+  &:link, &:visited
+    text-decoration: none
+
+table, .table
+  width: 100%
+
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=tel], textarea
+  font-size: $font-size 
+  font-family: $font-family
+  color: $font-color
+  background-color: white
+  border: 1px solid #c1c1c1
+  width: 220px
+
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=tel]
+  height: 27px
+  padding: 0 5px
+
+textarea
+  overflow: hidden
+  resize: none
+  padding: 5px
+
+h1, h2, h3, h4, h5, h6
+  font-weight: normal
+
+h2
+  font-size: 2em
+  line-height: 2em
+  margin-bottom: .5em
+
+p
+  margin: 0 0 1em 0
+
+
+// Custom selection colours
+::-moz-selection
+  background-color: #95d16e
+  color: white
+
+::selection
+  background-color: #95d16e    
+  color: white
+
+
+// ***********************************************************
+//                          HELPERS
+// ***********************************************************
+.left
+  float: left !important
+.right
+  float: right !important
+.clear
+  clear: both
+.last
+  margin:
+    right: 0 !important
+    bottom: 0 !important
+.first
+  margin:
+    left: 0 !important
+    top: 0 !important
+.bold
+  font-weight: bold
+.fix
+  overflow: hidden
+.capitalize
+  text-transform: lowercase !important
+  &:first-letter
+    text-transform: uppercase !important
+.upcase
+  text-transform: uppercase !important
+.downcase
+  text-transform: lowercase !important
+.txt-center
+  text-align: center !important
+.txt-right
+  text-align: right !important
+.txt-left
+  text-align: left !important
+.txt-truncate
+  overflow: hidden !important
+  text-overflow: ellipsis !important
+  white-space: nowrap !important
+
+.clearfix
+  //display: inline-block
+  &:after
+    content: "."
+    display: block
+    height: 0
+    clear: both
+    visibility: hidden
+    line-height: 0
+
+.table
+  display: table
+.t-row
+  display: table-row
+.t-cell
+  display: table-cell
+  vertical-align: middle  
+
+.border-box
+  -moz-box-sizing: border-box
+  -webkit-box-sizing: border-box
+  box-sizing: border-box
+
+
+
+// ***********************************************************
+//                       WIDGETS
+// ***********************************************************  
+@import plugins/uniDialog
+
+
+
+
+// ***********************************************************
+//                       LAYOUT
+// ***********************************************************
+
+
+
+
+// **********************************************************
+//                     PER PAGE STYLES
+// **********************************************************
+
+
+
+
+// **********************************************************
+//                     MEDIA QUERIES
+// **********************************************************

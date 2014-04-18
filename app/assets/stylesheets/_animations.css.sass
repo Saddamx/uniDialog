@@ -1,0 +1,92 @@
+// ***********************************************************
+//                             MIXINS
+// ***********************************************************
+
+
+// Accepted usage pattern:
+// @include animation(animName, 20s, $exclude: (webkit moz)) or
+// @include animation($name: animName, $exclude: (webkit moz), $duration: 20s)
+@mixin animation($name, $duration: 1s, $exclude: ())
+  $exclude-webkit: false
+  $exclude-moz: false
+  $exclude-o: false
+  $exclude-ms: false
+  @each $vendor-prefix in $exclude
+    @if $vendor-prefix == 'webkit'
+      $exclude-webkit: true
+    @if $vendor-prefix == 'moz'
+      $exclude-moz: true
+    @if $vendor-prefix == 'o'
+      $exclude-o: true
+    @if $vendor-prefix == 'ms'
+      $exclude-ms: true
+
+  -webkit-animation-duration: $duration
+  -moz-animation-duration: $duration
+  -o-animation-duration: $duration
+  -ms-animation-duration: $duration
+  animation-duration: $duration
+
+  -webkit-animation-fill-mode: both
+  -moz-animation-fill-mode: both
+  -o-animation-fill-mode: both
+  -ms-animation-fill-mode: both
+  animation-fill-mode: both
+
+
+  animation-name: $name
+  @if $exclude-webkit
+    -webkit-animation-name: none
+  @else
+    -webkit-animation-name: $name
+
+  @if $exclude-moz
+    -moz-animation-name: none
+  @else
+    -moz-animation-name: $name
+
+  @if $exclude-o
+    -o-animation-name: none
+  @else
+    -o-animation-name: $name
+
+  @if $exclude-ms
+    -ms-animation-name: none
+  @else
+    -ms-animation-name: $name
+
+
+
+
+@mixin infinite-animation($name, $duration: 1s, $exclude: ())
+  @include animation($name, $duration, $exclude: $exclude)
+  -webkit-animation-iteration-count: infinite
+  -moz-animation-iteration-count: infinite
+  -o-animation-iteration-count: infinite
+  -ms-animation-iteration-count: infinite
+  animation-iteration-count: infinite
+
+
+
+// Accepted usage pattern @include transition((top ease 500ms, color ease 500ms)) or @include transition("top ease 500ms, color ease 500ms")
+@mixin transition($params)  
+  transition: #{$params}
+  -webkit-transition: #{$params}
+  -moz-transition: #{$params}
+  -o-transition: #{$params}
+
+
+@mixin transform($params, $origin: null)  
+  transform: #{$params}
+  -webkit-transform: #{$params}
+  -moz-transform: #{$params}
+  -o-transform: #{$params}
+  @if $origin
+    transform-origin: #{$origin}
+    -ms-transform-origin: #{$origin}
+    -webkit-transform-origin: #{$origin}
+
+
+// ***********************************************************
+//                       DEFINITIONS
+// ***********************************************************
