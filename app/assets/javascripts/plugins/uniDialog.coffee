@@ -3,6 +3,7 @@
 #TODO Add fluid transitions when updating content
 #TODO Add support for multiple instances displayed in single view
 #TODO Add support for various notifications flash message for instance
+#TODO Add fade animations to clsoe and show functions
 
 TEMPLATES =
   error_500:
@@ -13,31 +14,6 @@ TEMPLATES =
       en: 
         error_message: "Something went wrong"
         
-DEFAULTS =
-  DIALOG:
-    closeBtn: true    
-    locale: 'en'
-    padding: 15
-    type: 'modal'    
-    wrapperClass: ''
-  MODAL:
-    margin: 20
-  POPUP:
-    margin: 20
-    position: 
-      at: 'right'
-      my: 'center'
-  NOTIFICATION: 
-    area: 'right top'
-    duration: 10000
-
-
-INSTANCES = 
-  POPUP: []
-  MODAL: []
-  NOTIFICATION: []
-
-  
     
 
 # Mainly for collision testing
@@ -108,23 +84,32 @@ class Area
 
 
 
-
-class Dialog
-  _$overlay = undefined
+# ***********************************************************
+#                        Dialog Class
+# ***********************************************************
+class Dialog  
+  Dialog.defaults =
+    closeBtn: true    
+    locale: 'en'
+    padding: 15
+    type: 'modal'    
+    wrapperClass: ''
     
-  _init = -> 
-    _$overlay = $("<div/>").hide().addClass("uniDialog-overlay")
-    $("body").append( _$overlay )
-    $(document)
-      .bind('mousedown.uniDialog', (e) -> $.uniDialog.closeAll() unless $(e.target).closest('.uniDialog-wrapper').length 
-      ).bind('keyup.uniDialog', (e) -> $.uniDialog.closeAll() if (e.keyCode == 27))
+  Dialog.getCounterPosition = (position) ->
+    counterPositions = 
+      left: 'right'
+      right: 'left'
+      bottom: 'top'
+      top: 'bottom'
+    return counterPositions[position]    
+  
 
-  constructor: (name, type, data, options) ->
+  constructor: (name, type, data, options, defaults) ->
     self = @    
     blueprint = TEMPLATES[name]
 
     @type = type
-    @options = $.extend true, {}, DEFAULTS.DIALOG, DEFAULTS[@type.toUpperCase()], options
+    @options = $.extend true, {}, Dialog.defaults, @constructor.defaults, options
     @name = name        
     @data = $.extend true, { i18n: { locale: @options.locale } }, { i18n: blueprint.i18n[@options.locale] }
     @events = blueprint.events
@@ -134,59 +119,32 @@ class Dialog
     # BUILD
     @html = {}
     @html.$content = $("<div/>").addClass("uniDialog-inner")
-    @html.$wrapper = $("<div/>").addClass("uniDialog-wrapper uniDialog-locale-#{@options.locale} uniDialog-type-" + @type + " uniDialog-name-#{@name} #{@options.wrapperClass}").append($("<div class='uniDialog-outer'/>").append(@html.$content)).data('uniDialog', @)
+    @html.$wrapper = $("<div/>").addClass("uniDialog-wrapper uniDialog-hidden uniDialog-locale-#{@options.locale} uniDialog-type-#{@type} uniDialog-name-#{@name} #{@options.wrapperClass}").append($("<div class='uniDialog-outer'/>").append(@html.$content)).data('uniDialog', @)
 
     if @options.closeBtn
       @html.$wrapper.append("<span class='uniDialog-close'/>").find('.uniDialog-close').click -> self.close()
-        
-    if @type is 'popup'
-      @html.$arrow = $("<div class='uniDialog-arrow-container'><div class='uniDialog-arrow-border'></div><div class='uniDialog-arrow-fill'></div></div>")
-      @html.$wrapper.addClass("uniDialog-position-#{@options.position.at}").append(@html.$arrow)
-      $("body").append(@html.$wrapper)
-
-    if @type is 'modal'
-      $("body").append(@html.$wrapper)
-
-    if @type is 'notification'
-      areaPositionRegExp = /^(left|center|right) (top|middle|bottom)$/
-      $area = $(@options.area)
-      if !$area.length and typeof @options.area is 'string'      
-        areaPosition = areaPositionRegExp.exec(@options.area) || areaPositionRegExp.exec(DEFAULTS['NOTIFICATION'].area)                   
-        $area = $(".uniDialog-area.area-#{areaPosition[1]}-#{areaPosition[2]}")
-        if !$area.length
-          $area = $('<div/>').addClass("uniDialog-area area-#{areaPosition[1]}-#{areaPosition[2]}")
-          $("body").append($area)             
-      $area.append(@html.$wrapper)
-      setTimeout (-> self.close()), self.options.duration
-      
+                
+    @render(data)
 
     # BIND EVENTS    
     $.each @events, (key, f) ->
       key = key.split ' '
       eventType = key[0]
       if key.length is 2
-        selector = key[1]        
-        self.html.$wrapper.on "#{eventType}.uniDialog", selector, -> f.apply(self, arguments)
+        selector = key[1]
+        self.html.$wrapper.on "#{eventType}.uniDialog", selector, -> f.apply(self, arguments)  
 
-    INSTANCES[@type.toUpperCase()].push @
+    @constructor.instances.push @
     
 
-  close: ->
-    #TODO Add fade animations        
-    @html.$wrapper.remove()
-    _$overlay.hide() if @type is 'modal'
-    INSTANCES[@type.toUpperCase()].splice( $.inArray(@, INSTANCES[@type.toUpperCase()]), 1 )
-    @trigger "afterClose"
+  close: ->        
+    @constructor.instances.splice( $.inArray(@, @constructor.instances), 1 )
+    
+  show: ->            
+    @trigger 'beforeShow'    
 
-  show: ->
-    #TODO Add fade animations        
-    @trigger 'beforeShow'
-    @reposition()
-    @html.$wrapper.removeClass('uni-popup-hidden')  
-
-
-  hide: ->
-    @html.$wrapper.addClass('uni-popup-hidden')
+  hide: -> 
+    @html.$wrapper.addClass('uniDialog-hidden')
 
   findEl: (selector) -> 
     @html.$wrapper.find("#{selector}")
@@ -195,9 +153,7 @@ class Dialog
     f = @callbacks[eventType]
     f.apply(@, args) if $.isFunction(f)
 
-  reposition: ->
-    return false if @type is 'notification'
-    
+  reposition: ->    
     #Just for further calculations
     @html.$content.removeAttr('style')
           
@@ -212,19 +168,11 @@ class Dialog
     popOutlineWidth = popWidth - @html.$content.outerWidth()
     popOutlineHeight = popHeight - @html.$content.outerHeight()
 
-    _getOppositePosition = ->
-      oppositePositions = 
-        left: 'right'
-        right: 'left'
-        bottom: 'top'
-        top: 'bottom'
-      return oppositePositions[@options.position.at]
-      
     _flipPosition = ->
-      @options.position.at = _getOppositePosition.call @
+      @options.position.at = Dialog.getOppositePosition.call
 
       htmlClass = @html.$wrapper.attr('class').replace(/uni-popup-pos-([a-z]+)/, "uni-popup-pos-#{@options.position.at[0]}")
-      @html.$wrapper.attr('class', htmlClass)    
+      @html.$wrapper.attr('class', htmlClass)   
 
     _resolveCollisions = (collisions, area, popArea) ->
       # TODO add scroll support
@@ -333,109 +281,198 @@ class Dialog
       # Align popup to area
       _appendPopupToArea.call @, popArea
 
-      
-
-
-    else if @type is 'modal'      
-      collisionsArea = new Area( [winOffset.left, winOffset.top], [winWidth + winOffset.left, winHeight + winOffset.top], 50 )
-
-      p1 = [(winWidth - popWidth)/2 + winOffset.left, (winHeight - popHeight)/2 + winOffset.top]
-      popArea = new Area( p1, [p1[0] + popWidth, p1[1] + popHeight] )
-
-      # Detect collisions
-      collisions = collisionsArea.detectCollisions popArea
-
-      # Resolve collisions
-      _resolveCollisions(collisions, collisionsArea, popArea)
-            
-      # Align popup to area
-      _appendPopupToArea.call @, popArea
         
   
-  update: (data) ->
+  render: (data) ->
     self = @
 
     _setContent = (json) ->
       self.hide()
       self.trigger 'beforeRender', json
       $.extend self.data, json      
-      self.html.$content.html( self.template.render(self.data) )            
-      self.show()
-      self.trigger 'afterRender'
+      self.html.$content.html( self.template.render(self.data) )
+      self.show()      
 
     if typeof data is 'string'
-      @html.$wrapper.addClass('uni-popup-loading')
+      @html.$wrapper.addClass('uniDialog-loading')
       @reposition()
       $.ajax data,
         dataType: 'json'
-        error: () ->
-          $.uniPopup.open('error_500', { target: self.target })
+        error: ->
+          $.uniDialog.open('error_500')
         success: (json) ->                    
-          self.html.$wrapper.removeClass('uni-popup-loading')
+          self.html.$wrapper.removeClass('uniDialog-loading')
           _setContent(json)
           
           
     else if typeof data is 'object'      
       _setContent(data)
     
-  $ -> do _init
+  $ ->         
+    $(document)
+      .bind('mousedown.uniDialog', (e) -> $.uniDialog.closeAll() unless $(e.target).closest('.uniDialog-wrapper').length 
+      ).bind('keyup.uniDialog', (e) -> $.uniDialog.closeAll() if (e.keyCode == 27))
    
     
 
-class Popup extends Dialog  
-  constructor: -> super
+
+# ***********************************************************
+#                        Popup Class
+# ***********************************************************
+class Popup extends Dialog 
+  Popup.instances = []
+  Popup.defaults = 
+    margin: 20
+    position: 
+      at: 'right'
+      my: 'center'
+
+  constructor: ->     
+    super
+    @html.$arrow = $("<div class='uniDialog-arrow-container'><div class='uniDialog-arrow-border'></div><div class='uniDialog-arrow-fill'></div></div>")
+    @html.$wrapper.addClass("uniDialog-position-#{@options.position.at}").append(@html.$arrow)
+    $("body").append(@html.$wrapper)   
 
 
+
+
+# ***********************************************************
+#                        Modal Class
+# ***********************************************************
 class Modal extends Dialog  
-  constructor: -> super
+  Modal.instances = []
+  Modal.defaults = 
+    margin: 50
+    minWidth: 100
+    minHeight: 100
+    width: 'auto'
+    height: 'auto'
+    maxWidth: 600
+    maxHeight: 480
+
+  constructor: (name, type, data, options) -> 
+    super    
+    @html.$overlay = $("<div/>").hide().addClass("uniDialog-overlay").append(@html.$wrapper)
+    $("body").append(@html.$overlay)
+
+    for property in ['min-width', 'min-height', 'max-width', 'max-height', 'width', 'height']    
+      variableName = property.replace /-([a-z])/i, (m1, m2) -> return m2.toUpperCase()
+      if options[variableName]
+        @html.$wrapper.css(property, options[variableName])
+      if @html.$wrapper.css(property) is 'none'
+        @html.$wrapper.css(property, Modal.defaults[variableName])
+
   show: ->
-    super        
-    if window.hasOwnProperty('ontouchstart')
-      _$overlay.css
-        position: 'absolute'
-        height: $(document).height()
-        width: $(document).width()
-    else
-      _$overlay.removeAttr('style')
+    super
+    @html.$overlay.show()
+    @reposition()
+    @html.$wrapper.removeClass('uniDialog-hidden')
 
-    _$overlay.show()
+  close: ->
+    super
+    @html.$overlay.remove()
+
+  reposition: ->    
+    #Just for further calculations
+    @html.$content.removeAttr('style')
+          
+    winWidth = $(window).width()
+    winHeight = $(window).height()
+
+    dialogWidth = @html.$wrapper.outerWidth()
+    dialogHeight = @html.$wrapper.outerHeight()    
+
+    ###
+    boundsArea = new Area( [0, 0], [winWidth, winHeight], @options.margin )
+
+    p1 = [(winWidth - popWidth)/2, (winHeight - popHeight)/2]
+    dialogArea = new Area( p1, [p1[0] + popWidth, p1[1] + popHeight] )
+
+    # Detect collisions
+    collisions = boundsArea.detectCollisions dialogArea
+
+    # Resolve collisions
+    # TODO add scroll support
+    if $.inArray('widthExceeded', collisions) >= 0
+      popArea.offset({ left: area.offset().left })
+
+    if $.inArray('heightExceeded', collisions) >= 0
+      popArea.offset({ top: area.p2.y - popArea.height() })
+          
+    # Align popup to area    
+    @html.$wrapper.css
+      left: popArea.offset().left
+      top: popArea.offset().top
+    @html.$content.css
+      width: popArea.width() - popOutlineWidth
+      height: popArea.height() - popOutlineHeight  
+
+    ###
+
+# ***********************************************************
+#                     Notification Class
+# ***********************************************************
+class Notification extends Dialog
+  Notification.instances = []
+  Notification.defaults = 
+    area: 'right top'
+    duration: 10000
+
+  constructor: -> 
+    super
+    areaPositionRegExp = /^(left|center|right) (top|middle|bottom)$/
+    $area = $(@options.area)
+    if !$area.length and typeof @options.area is 'string'      
+      areaPosition = areaPositionRegExp.exec(@options.area) || areaPositionRegExp.exec(Notification.defaults.area)                   
+      $area = $(".uniDialog-area.area-#{areaPosition[1]}-#{areaPosition[2]}")
+      if !$area.length
+        $area = $('<div/>').addClass("uniDialog-area area-#{areaPosition[1]}-#{areaPosition[2]}")
+        $("body").append($area)             
+    $area.append(@html.$wrapper)
+    setTimeout (-> self.close()), self.options.duration
+
+  show: ->
+    super
+    
 
 
-class Notification extends Dialog  
-  constructor: -> super
 
 
+
+# ***********************************************************
+#                       Public Class
+# ***********************************************************
 $.uniDialog = 
-  defaults: DEFAULTS
+  defaults: 
+    shared: Dialog.defaults
+    popup: Popup.defaults
+    modal: Modal.defaults
+    notification: Notification.defaults
 
   register: (name, blueprint) ->              
     blueprint.events = blueprint.events || {}
     blueprint.callbacks = blueprint.callbacks || {}
     blueprint.i18n = blueprint.i18n || {}
-    if window.HoganTemplates and window.Hogan and (window.HoganTemplates[blueprint.template] instanceof Hogan.constructor)    
+    if window.HoganTemplates and (window.HoganTemplates[blueprint.template] instanceof Hogan.constructor)    
       blueprint.template = HoganTemplates[blueprint.template]
-    else if window.Hogan
-      blueprint.template = Hogan.compile(blueprint.template)
     else
-      blueprint.template = blueprint.template || ''
+      blueprint.template = Hogan.compile(blueprint.template)
+    
     TEMPLATES[name] = blueprint
         
   open: (name, options) ->
-    options = options || {}
-    type = options.type || DEFAULTS.DIALOG.type
-    delete options.type
-    data = options.data || {}
-    delete options.data
-
     dialogTypes =       
       popup: Popup
       modal: Modal
-      notification: Notification
+      notification: Notification    
 
-    popup = new dialogTypes[type](name, type, data, options)
-    popup.update data
-    
-    return popup
+    options = options || {}
+    type = options.type || Dialog.defaults.type
+    delete options.type
+    data = options.data || {}
+    delete options.data
+      
+    return new dialogTypes[type](name, type, data, options)
 
   closeAll: ->        
     #$.each OPENED["POPUPS"], (index, popup) -> popup.close()

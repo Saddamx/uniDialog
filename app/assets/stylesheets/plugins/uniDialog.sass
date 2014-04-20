@@ -1,12 +1,3 @@
-.uniDialog-overlay
-  background: url(/assets/uniDialog/uni-overlay-bg.png) repeat 0 0
-  width: 100%
-  height: 100%
-  position: fixed
-  top: 0
-  left: 0
-  z-index: 2000
-
 .uniDialog-wrapper
   background-color: white
   position: relative
@@ -24,7 +15,7 @@
       height: 24px !important
       &:before
         background: url(/assets/uniDialog/ajax-loader.gif) no-repeat 50% 50%
-        content: ""
+        content: ''
         position: absolute
         left: 0
         top: 0
@@ -39,8 +30,6 @@
     top: -99999px !important
     left: -99999px !important
     visibility: hidden !important
-    max-width: 99999px !important
-    max-height: 99999px !important
     overflow: visible !important
   .uniDialog-close
     background: url(/assets/uniDialog/uni-close.png) no-repeat 50% 50% #c2c2c2
@@ -66,6 +55,15 @@
     border-radius: 5px
     .uniDialog-inner      
       position: relative
+  
+
+
+.uniDialog-type-modal, 
+.uniDialog-type-popup
+  position: absolute
+
+
+.uniDialog-type-popup
   .uniDialog-arrow-container
     position: absolute
     .uniDialog-arrow-fill, 
@@ -78,14 +76,6 @@
       border-width: 10px
     .up-ab
       border-width: 11px
-
-
-.uniDialog-type-modal, 
-.uniDialog-type-popup
-  position: absolute
-
-
-.uniDialog-type-popup
   &.uniDialog-position-right .uniDialog-arrow-container
     left: -12px
     width: 13px
@@ -143,6 +133,16 @@
     .uniDialog-arrow-border
       border-color: transparent transparent #c2c2c2 transparent
 
+
+
+.uniDialog-overlay
+  background: url(/assets/uniDialog/uni-overlay-bg.png) repeat 0 0
+  width: 100%
+  height: 100%
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 2000
 
 
 .uniDialog-area
